@@ -43,12 +43,21 @@ def get_artist_albums(artist_id):
     return album_ids
 
 
-def download_album(album):
+def download_album(album, wrapper_p_bar=None):
     """ Downloads songs from an album """
     artist, album_name = get_album_name(album)
     tracks = get_album_tracks(album)
-    for n, track in Printer.progress(enumerate(tracks, start=1), unit_scale=True, unit='Song', total=len(tracks)):
-        download_track('album', track[ID], extra_keys={'album_num': str(n).zfill(2), 'artist': artist, 'album': album_name, 'album_id': album}, disable_progressbar=True)
+    char_num = max({len(str(len(tracks))), 2})
+    pos = 3
+    if wrapper_p_bar is not None:
+        pos = wrapper_p_bar if type(wrapper_p_bar) is int else -(wrapper_p_bar.pos + 2)
+    p_bar = Printer.progress(enumerate(tracks, start=1), unit_scale=True, unit='song', total=len(tracks), disable=not Zotify.CONFIG.get_show_album_pbar(), pos=pos)
+    for n, track in p_bar:
+        download_track('album', track[ID], extra_keys={'album_num': str(n).zfill(char_num), 'artist': artist, 'album': album_name, 'album_id': album},
+                       wrapper_p_bar=p_bar if Zotify.CONFIG.get_show_album_pbar() else pos)
+        if wrapper_p_bar is not None and type(wrapper_p_bar) is not int:
+            wrapper_p_bar.refresh()
+        p_bar.set_description(track[NAME])
 
 
 def download_artist_albums(artist):
