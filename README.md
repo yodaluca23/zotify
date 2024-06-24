@@ -58,20 +58,30 @@ Be aware you have to set boolean values in the commandline like this: `--downloa
 
 | Key (config)                 | Commandline parameter            | Defaults | Description
 |------------------------------|----------------------------------|----------|---------------------------------------------------------------------|
-| CREDENTIALS_LOCATION         | --credentials-location           |          | The location of the credentials.json
-| OUTPUT                       | --output                         |          | The output location/format (see below)
-| SONG_ARCHIVE                 | --song-archive                   |          | The song_archive file for SKIP_PREVIOUSLY_DOWNLOADED
 | ROOT_PATH                    | --root-path                      |          | Directory where Zotify saves music
+| SAVE_CREDENTIALS             | --save-credentials               | True     | Whether Spotify credentials should be saved in a credentials.json
+| CREDENTIALS_LOCATION         | --credentials-location           |          | Directory containing credentials.json
+| OUTPUT                       | --output                         |          | Master output location/format (see below)
+| OUTPUT_PLAYLIST              | --output-default-playlist        | {playlist}/{artist}_{song_name}.{ext} | Output location/format for playlists
+| OUTPUT_PLAYLIST_EXT          | --output-default-playlist-ext    | {playlist}/{playlist_num}_{artist}_{song_name}.{ext} | Output location/format for extended playlists
+| OUTPUT_LIKED_SONGS           | --output-default-liked-songs     | Liked Songs/{artist}_{song_name}.{ext} | Output location/format for user's Liked Songs
+| OUTPUT_SINGLE                | --output-default-single          | {artist}/{album}/{artist} - {song_name}.{ext} | Output location/format for single tracks
+| OUTPUT_ALBUM                 | --output-default-album           | {artist}/{album}/{album_num} - {artist} - {song_name}.{ext} | Output location/format for albums
 | ROOT_PODCAST_PATH            | --root-podcast-path              |          | Directory where Zotify saves podcasts
-| SPLIT_ALBUM_DISCS            | --split-album-discs              | False    | Saves each disk in its own folder
-| DOWNLOAD_LYRICS              | --download-lyrics                | True     | Downloads synced lyrics in .lrc format, uses unsynced as fallback.
-| MD_ALLGENRES                 | --md-allgenres                   | False    | Save all relevant genres in metadata
-| MD_GENREDELIMITER            | --md-genredelimiter              | ,        | Delimiter character used to split genres in metadata
+| TEMP_DOWNLOAD_DIR            | --temp-download-dir              |          | Download tracks to a temporary directory first
 | DOWNLOAD_FORMAT              | --download-format                | ogg      | The download audio format (aac, fdk_aac, m4a, mp3, ogg, opus, vorbis)
 | DOWNLOAD_QUALITY             | --download-quality               | auto     | Audio quality of downloaded songs (normal, high, very_high*)
-| TRANSCODE_BITRATE            | --transcode-bitrate              | auto     | Overwrite the bitrate for ffmpeg encoding
+| TRANSCODE_BITRATE            | --transcode-bitrate              | auto     | Overwrite the bitrate for FFMPEG encoding
+| SONG_ARCHIVE_LOCATION        | --song-archive-location          |          | Directory where Zotify saves the global song_archive file (SKIP_PREVIOUSLY_DOWNLOADED) 
+| DISABLE_DIRECTORY_ARCHIVES   | --disable-directory-archives     | False    | Disable local song_archive in download directories
+| SPLIT_ALBUM_DISCS            | --split-album-discs              | False    | Saves each disk in its own folder
+| DOWNLOAD_LYRICS              | --download-lyrics                | True     | Downloads synced lyrics in .lrc format, uses unsynced as fallback
+| LYRICS_LOCATION              | --lyrics-location                |          | Directory where Zotify saves lyrics files (default is output directory)
+| MD_SAVE_GENRES               | --md-save-genres                 | False    | Whether genres should be saved in metadata
+| MD_ALLGENRES                 | --md-allgenres                   | False    | Save all relevant genres in metadata
+| MD_GENREDELIMITER            | --md-genredelimiter              | ,        | Delimiter character used to split genres in metadata
 | SKIP_EXISTING_FILES          | --skip-existing                  | True     | Skip songs with the same name
-| SKIP_PREVIOUSLY_DOWNLOADED   | --skip-previously-downloaded     | False    | Use a song_archive file to skip previously downloaded songs
+| SKIP_PREVIOUSLY_DOWNLOADED   | --skip-previously-downloaded     | False    | Use the global song_archive file to skip previously downloaded songs
 | RETRY_ATTEMPTS               | --retry-attempts                 | 1        | Number of times Zotify will retry a failed request
 | BULK_WAIT_TIME               | --bulk-wait-time                 | 1        | The wait time between bulk downloads
 | OVERRIDE_AUTO_WAIT           | --override-auto-wait             | False    | Totally disable wait time between songs with the risk of instability
@@ -80,21 +90,30 @@ Be aware you have to set boolean values in the commandline like this: `--downloa
 | LANGUAGE                     | --language                       | en       | Language for spotify metadata
 | PRINT_SPLASH                 | --print-splash                   | False    | Show the Zotify logo at startup
 | PRINT_SKIPS                  | --print-skips                    | True     | Show messages if a song is being skipped
-| PRINT_DOWNLOAD_PROGRESS      | --print-download-progress        | True     | Show download/playlist progress bars
-| PRINT_ERRORS                 | --print-errors                   | True     | Show errors
+| PRINT_DOWNLOAD_PROGRESS      | --print-download-progress        | True     | Show song download progress bar
+| PRINT_URL_PROGRESS           | --print-url-progress             | True     | Show url progress bar
+| PRINT_ALBUM_PROGRESS         | --print-album-progress           | True     | Show album progress bar
+| PRINT_PLAYLIST_PROGRESS      | --print-playlist-progress        | True     | Show playlist progress bar
+| PRINT_PROGRESS_INFO          | --print-progress-info            | True     | Show download progress info
 | PRINT_DOWNLOADS              | --print-downloads                | False    | Print messages when a song is finished downloading
-| TEMP_DOWNLOAD_DIR            | --temp-download-dir              |          | Download tracks to a temporary directory first
+| PRINT_WARNINGS               | --print-warnings                 | True     | Show warnings
+| PRINT_ERRORS                 | --print-errors                   | True     | Show errors
+| PRINT_API_ERRORS             | --print-api-errors               | True     | Show API errors
+| FFMPEG_LOG_LEVEL             | --ffmpeg-log-level               | error    | Detail of FFMPEG's log when completing a transcoded download
 
 *very-high is limited to premium only  
 
 ### Configuration 
 
-You can find the configuration file in following locations:  
+When --config-location is unspecified in the command line, you can find the configuration file in following default locations:
+
 | OS              | Location          
 |-----------------|-------------------------------------------------------------------|
 | Windows         | `C:\Users\<USERNAME>\AppData\Roaming\Zotify\config.json`          |
 | MacOS           | `/Users/<USERNAME>/Library/ApplicationSupport/Zotify/config.json` |
 | Linux           | `/home/<USERNAME>/.config/zotify/config.json`                     |
+
+Using --config-location does not set the config location permanently, it must be called each time if not in the default location.
 
 To log out, just remove the configuration file. Uninstalling Zotify does not remove the config file.
 
