@@ -339,6 +339,11 @@ def convert_audio_format(filename) -> None:
     output_params = ['-c:a', file_codec]
     if bitrate is not None:
         output_params += ['-b:a', bitrate]
+    if file_codec in {"mp3",}:
+        # output_params += ["-metadata", "track=X"]
+        output_params += ["-map_metadata", "0:s"]
+        output_params += ["-metadata:s:v", 'comment="Cover (front)"'] 
+        output_params += ["-id3v2_version", "3"]
     
     try:
         ff_m = ffmpy.FFmpeg(

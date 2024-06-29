@@ -116,8 +116,8 @@ class Config:
             config_fp = Path.cwd() / '.zotify/config.json'
         else:
             config_fp = system_paths[sys.platform] / 'config.json'
-        if args.CONFIG_LOCATION:
-            config_fp = Path(args.CONFIG_LOCATION) / 'config.json'
+        if args.config_location:
+            config_fp = Path(args.config_location) / 'config.json'
         
         true_config_file_path = Path(config_fp).expanduser()
         

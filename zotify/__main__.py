@@ -18,7 +18,7 @@ def main():
                         help='Suppress the splash screen when loading.')
     parser.add_argument('-c', '--config', '--config-location',
                         type=str,
-                        dest='CONFIG_LOCATION',
+                        dest='config_location',
                         help='Specify the zconfig.json location')
     parser.add_argument('--username',
                         type=str,
@@ -34,11 +34,11 @@ def main():
                        nargs='*',
                        help='Downloads the track, album, playlist, podcast episode, or all albums by an artist from a url. Can take multiple urls.')
     group.add_argument('-l', '--liked',
-                       dest='LIKED_SONGS',
+                       dest='liked_songs',
                        action='store_true',
                        help='Downloads all the liked songs from your account.')
     group.add_argument('-f', '--followed',
-                       dest='FOLLOWED_ARTISTS',
+                       dest='followed_artists',
                        action='store_true',
                        help='Downloads all the songs from all your followed artists.')
     group.add_argument('-p', '--playlist',
@@ -57,7 +57,7 @@ def main():
     for configkey in CONFIG_VALUES:
         parser.add_argument(*CONFIG_VALUES[configkey]['arg'],
                             type=str,
-                            dest=configkey,
+                            dest=configkey.lower(),
                             default=None,
                             help='Specify the value of the ['+configkey+'] config value')
 
