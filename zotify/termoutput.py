@@ -35,7 +35,5 @@ class Printer:
             print(msg, flush=True, end="")
 
     @staticmethod
-    def progress(iterable=None, desc=None, total=None, unit='it', disable=False, unit_scale=False, unit_divisor=1000):
-        if not Zotify.CONFIG.get(PrintChannel.DOWNLOAD_PROGRESS.value):
-            disable = True
-        return tqdm(iterable=iterable, desc=desc, total=total, disable=disable, unit=unit, unit_scale=unit_scale, unit_divisor=unit_divisor)
+    def progress(iterable=None, desc=None, total=None, unit='it', disable=False, unit_scale=False, unit_divisor=1000, pos=1):
+        return tqdm(iterable=iterable, desc=desc, total=total, disable=disable, unit=unit, unit_scale=unit_scale, unit_divisor=unit_divisor, position=pos, leave=False)
