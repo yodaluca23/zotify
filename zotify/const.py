@@ -102,6 +102,7 @@ CODEC_MAP = {
     'ogg': 'copy',
     'opus': 'libopus',
     'vorbis': 'copy',
+    'copy': 'copy'
 }
 
 EXT_MAP = {
@@ -112,4 +113,5 @@ EXT_MAP = {
     'ogg': 'ogg',
     'opus': 'ogg',
     'vorbis': 'ogg',
+    'copy': 'ogg'
 }
