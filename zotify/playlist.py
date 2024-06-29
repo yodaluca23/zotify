@@ -49,7 +49,7 @@ def get_playlist_info(playlist_id) -> tuple[str, str]:
 
 def download_playlist(playlist, wrapper_p_bars: list | None = None):
     """Downloads all the songs from a playlist"""
-    playlist_songs = [song for song in get_playlist_songs(playlist[ID]) if song[TRACK][ID]]
+    playlist_songs = [song_dict[TRACK] for song_dict in get_playlist_songs(playlist[ID]) if song_dict[TRACK] is not None and song_dict[TRACK][ID]]
     char_num = max({len(str(len(playlist_songs))), 2})
     
     pos = 3
@@ -62,17 +62,17 @@ def download_playlist(playlist, wrapper_p_bars: list | None = None):
     wrapper_p_bars.append(p_bar if Zotify.CONFIG.get_show_playlist_pbar() else pos)
     
     for n, song in p_bar:
-        if song[TRACK][TYPE] == "episode": # Playlist item is a podcast episode
-            download_episode(song[TRACK][ID])
+        if song[TYPE] == "episode": # Playlist item is a podcast episode
+            download_episode(song[ID])
         else:
-            download_track('extplaylist', song[TRACK][ID], extra_keys=
-                           {'playlist_song_name': song[TRACK][NAME],
+            download_track('extplaylist', song[ID], extra_keys=
+                           {'playlist_song_name': song[NAME],
                             'playlist': playlist[NAME],
                             'playlist_num': str(n).zfill(char_num),
                             'playlist_id': playlist[ID],
-                            'playlist_track_id': song[TRACK][ID]},
+                            'playlist_track_id': song[ID]},
                            wrapper_p_bars=wrapper_p_bars)
-        p_bar.set_description(song[TRACK][NAME])
+        p_bar.set_description(song[NAME])
         for bar in wrapper_p_bars:
             if type(bar) != int: bar.refresh()
 
