@@ -27,6 +27,8 @@ def create_download_directory(download_path: str) -> None:
 
     # add hidden file with song ids
     hidden_file_path = PurePath(download_path).joinpath('.song_ids')
+    if Zotify.CONFIG.get_disable_directory_archives():
+        return
     if not Path(hidden_file_path).is_file():
         with open(hidden_file_path, 'w', encoding='utf-8') as f:
             pass
@@ -62,9 +64,10 @@ def get_directory_song_ids(download_path: str) -> List[str]:
     """ Gets song ids of songs in directory """
 
     song_ids = []
-
+    
     hidden_file_path = PurePath(download_path).joinpath('.song_ids')
-    if Path(hidden_file_path).is_file():
+
+    if Path(hidden_file_path).is_file() and not Zotify.CONFIG.get_disable_directory_archives():
         with open(hidden_file_path, 'r', encoding='utf-8') as file:
             song_ids.extend([line.strip().split('\t')[0] for line in file.readlines()])
 
@@ -75,6 +78,8 @@ def add_to_directory_song_ids(download_path: str, song_id: str, filename: str, a
     """ Appends song_id to .song_ids file in directory """
 
     hidden_file_path = PurePath(download_path).joinpath('.song_ids')
+    if Zotify.CONFIG.get_disable_directory_archives():
+        return
     # not checking if file exists because we need an exception
     # to be raised if something is wrong
     with open(hidden_file_path, 'a', encoding='utf-8') as file:
