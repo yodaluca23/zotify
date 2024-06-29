@@ -147,6 +147,7 @@ cython_debug/
 
 # Configuration
 .zotify/
+config.json
 
 #Download Folder
 Zotify\ Music/
