@@ -69,7 +69,7 @@ Be aware you have to set boolean values in the commandline like this: `--downloa
 | OUTPUT_ALBUM                 | --output-default-album           | {artist}/{album}/{album_num} - {artist} - {song_name}.{ext} | Output location/format for albums
 | ROOT_PODCAST_PATH            | --root-podcast-path              |          | Directory where Zotify saves podcasts
 | TEMP_DOWNLOAD_DIR            | --temp-download-dir              |          | Download tracks to a temporary directory first
-| DOWNLOAD_FORMAT              | --download-format                | ogg      | The download audio format (aac, fdk_aac, m4a, mp3, ogg, opus, vorbis)
+| DOWNLOAD_FORMAT              | --download-format                | copy     | The download audio format (aac, fdk_aac, m4a, mp3, ogg, opus, vorbis)
 | DOWNLOAD_QUALITY             | --download-quality               | auto     | Audio quality of downloaded songs (normal, high, very_high*)
 | TRANSCODE_BITRATE            | --transcode-bitrate              | auto     | Overwrite the bitrate for FFMPEG encoding
 | SONG_ARCHIVE_LOCATION        | --song-archive-location          |          | Directory where Zotify saves the global song_archive file (SKIP_PREVIOUSLY_DOWNLOADED) 

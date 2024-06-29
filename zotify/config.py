@@ -62,7 +62,7 @@ CONFIG_VALUES = {
     OUTPUT_ALBUM:               { 'default': '{artist}/{album}/{album_num} - {artist} - {song_name}.{ext}', 'type': str,    'arg': '--output-default-album'       },
     ROOT_PODCAST_PATH:          { 'default': '',                                                            'type': str,    'arg': '--root-podcast-path'          },
     TEMP_DOWNLOAD_DIR:          { 'default': '',                                                            'type': str,    'arg': '--temp-download-dir'          },
-    DOWNLOAD_FORMAT:            { 'default': 'ogg',                                                         'type': str,    'arg': '--download-format'            },
+    DOWNLOAD_FORMAT:            { 'default': 'copy',                                                         'type': str,    'arg': '--download-format'            },
     DOWNLOAD_QUALITY:           { 'default': 'auto',                                                        'type': str,    'arg': '--download-quality'           },
     TRANSCODE_BITRATE:          { 'default': 'auto',                                                        'type': str,    'arg': '--transcode-bitrate'          },
     SONG_ARCHIVE_LOCATION:      { 'default': '',                                                            'type': str,    'arg': '--song-archive-location'      },
