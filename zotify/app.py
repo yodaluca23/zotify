@@ -6,8 +6,8 @@ from zotify.album import download_album, download_artist_albums
 from zotify.const import TRACK, NAME, ID, ARTIST, ARTISTS, ITEMS, TRACKS, EXPLICIT, ALBUM, ALBUMS, \
     OWNER, PLAYLIST, PLAYLISTS, DISPLAY_NAME
 from zotify.loader import Loader
-from zotify.playlist import get_playlist_songs, get_playlist_info, download_from_user_playlist, download_playlist
-from zotify.podcast import download_episode, get_show_episodes
+from zotify.playlist import get_playlist_info, download_from_user_playlist, download_playlist
+from zotify.podcast import download_episode, download_show
 from zotify.termoutput import Printer, PrintChannel
 from zotify.track import download_track, get_saved_tracks, get_followed_artists
 from zotify.utils import splash, split_input, regex_input_for_urls
@@ -19,9 +19,10 @@ SEARCH_URL = 'https://api.spotify.com/v1/search'
 def client(args) -> None:
     """ Connects to download server to perform query's and get songs to download """
     Zotify(args)
-
+    
     Printer.print(PrintChannel.SPLASH, splash())
-
+    print("")
+    
     quality_options = {
         'auto': AudioQuality.VERY_HIGH if Zotify.check_premium() else AudioQuality.HIGH,
         'normal': AudioQuality.NORMAL,
@@ -53,16 +54,36 @@ def client(args) -> None:
         return
 
     if args.liked_songs:
-        for song in get_saved_tracks():
+        liked_songs = get_saved_tracks()
+        
+        pos = 3
+        p_bar = Printer.progress(liked_songs, unit='songs', total=len(liked_songs), unit_scale=True, 
+                                 disable=not Zotify.CONFIG.get_show_playlist_pbar(), pos=pos)
+        wrapper_p_bars = [p_bar if Zotify.CONFIG.get_show_playlist_pbar() else pos]
+        
+        for song in p_bar:
             if not song[TRACK][NAME] or not song[TRACK][ID]:
-                Printer.print(PrintChannel.SKIPS, '###   SKIPPING:  SONG DOES NOT EXIST ANYMORE   ###' + "\n")
+                Printer.print(PrintChannel.SKIPS, '###   SKIPPING:  SONG DOES NOT EXIST ANYMORE   ###')
+                Printer.print(PrintChannel.SKIPS, '\n\n')
             else:
-                download_track('liked', song[TRACK][ID])
+                download_track('liked', song[TRACK][ID], wrapper_p_bars=wrapper_p_bars)
+                p_bar.set_description(song[TRACK][NAME])
+            for bar in wrapper_p_bars:
+                if type(bar) != int: bar.refresh()
         return
     
     if args.followed_artists:
-        for artist in get_followed_artists():
-            download_artist_albums(artist)
+        artists = get_followed_artists()
+        pos = 7
+        p_bar = Printer.progress(artists, unit='artists', total=len(artists), unit_scale=True, 
+                                 disable=not Zotify.CONFIG.get_show_url_pbar(), pos=pos)
+        wrapper_p_bars = [p_bar if Zotify.CONFIG.get_show_url_pbar() else pos]
+        
+        for artist in p_bar:
+            download_artist_albums(artist[ID], wrapper_p_bars)
+            p_bar.set_description(artist[NAME])
+            for bar in wrapper_p_bars:
+                if type(bar) != int: bar.refresh()
         return
 
     if args.search:
@@ -86,33 +107,35 @@ def download_from_urls(urls: list[str]) -> bool:
     """ Downloads from a list of urls """
     download = False
     
-    pos = 5
-    p_bar = Printer.progress(urls, unit='url', total=len(urls), unit_scale=True, disable=not Zotify.CONFIG.get_show_url_pbar(), pos=pos)
+    pos = 7
+    p_bar = Printer.progress(urls, unit='urls', total=len(urls), unit_scale=True, disable=not Zotify.CONFIG.get_show_url_pbar(), pos=pos)
+    wrapper_p_bars = [p_bar if Zotify.CONFIG.get_show_url_pbar() else pos]
     for spotify_url in p_bar:
         track_id, album_id, playlist_id, episode_id, show_id, artist_id = regex_input_for_urls(spotify_url)
         
         if track_id is not None:
             download = True
-            download_track('single', track_id, wrapper_p_bar=p_bar if Zotify.CONFIG.get_show_url_pbar() else pos)
+            download_track('single', track_id, wrapper_p_bars=wrapper_p_bars)
         elif artist_id is not None:
             download = True
-            download_artist_albums(artist_id)
+            download_artist_albums(artist_id, wrapper_p_bars)
         elif album_id is not None:
             download = True
-            download_album(album_id, p_bar if Zotify.CONFIG.get_show_url_pbar() else pos)
+            download_album(album_id, wrapper_p_bars)
         elif playlist_id is not None:
             download = True
             download_playlist({ID: playlist_id,
                                NAME: get_playlist_info(playlist_id)[0]},
-                               p_bar if Zotify.CONFIG.get_show_url_pbar() else pos)
+                               wrapper_p_bars)
         elif episode_id is not None:
             download = True
-            download_episode(episode_id)
+            download_episode(episode_id, wrapper_p_bars)
         elif show_id is not None:
             download = True
-            for episode in get_show_episodes(show_id):
-                download_episode(episode)
-
+            download_show(show_id, wrapper_p_bars)
+        for bar in wrapper_p_bars:
+            if type(bar) != int: bar.refresh()
+    
     return download
 
 
@@ -280,16 +303,23 @@ def search(search_term):
         while len(selection) == 0:
             selection = str(input('ID(s): '))
         inputs = split_input(selection)
-        for pos in inputs:
-            position = int(pos)
+        
+        pos = 7
+        p_bar = Printer.progress(inputs, unit='choices', total=len(inputs), unit_scale=True, 
+                                 disable=not Zotify.CONFIG.get_show_url_pbar(), pos=pos)
+        wrapper_p_bars = [p_bar if Zotify.CONFIG.get_show_url_pbar() else pos]
+        
+        for position in inputs:
             for dic in dics:
                 print_pos = dics.index(dic) + 1
-                if print_pos == position:
+                if print_pos == int(position):
                     if dic['type'] == TRACK:
-                        download_track('single', dic[ID])
+                        download_track('single', dic[ID], wrapper_p_bars=wrapper_p_bars)
                     elif dic['type'] == ALBUM:
-                        download_album(dic[ID])
+                        download_album(dic[ID], wrapper_p_bars)
                     elif dic['type'] == ARTIST:
-                        download_artist_albums(dic[ID])
+                        download_artist_albums(dic[ID], wrapper_p_bars)
                     else:
-                        download_playlist(dic)
+                        download_playlist(dic, wrapper_p_bars)
+                for bar in wrapper_p_bars:
+                    if type(bar) != int: bar.refresh()

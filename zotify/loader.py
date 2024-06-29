@@ -3,7 +3,6 @@
 
 # imports
 from itertools import cycle
-from shutil import get_terminal_size
 from threading import Thread
 from time import sleep
 
@@ -53,7 +52,7 @@ class Loader:
         for c in cycle(self.steps):
             if self.done:
                 break
-            Printer.print_loader(self.channel, f"\r\t{c} {self.desc} ")
+            Printer.print_loader(self.channel, f"\t{c} {self.desc}")
             sleep(self.timeout)
 
     def __enter__(self):
@@ -61,11 +60,8 @@ class Loader:
 
     def stop(self):
         self.done = True
-        cols = get_terminal_size((80, 20)).columns
-        Printer.print_loader(self.channel, "\r" + " " * cols)
-
         if self.end != "":
-            Printer.print_loader(self.channel, f"\r{self.end}")
+            Printer.print(self.channel, self.end)
 
     def __exit__(self, exc_type, exc_value, tb):
         # handle exceptions with those variables ^

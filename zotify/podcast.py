@@ -71,15 +71,37 @@ def download_podcast_directly(url, filename):
     return path
 
 
-def download_episode(episode_id) -> None:
+def download_show(show_id, wrapper_p_bars: list | None = None):
+    episodes = get_show_episodes(show_id)
+    
+    pos = 3
+    if wrapper_p_bars is not None:
+        pos = wrapper_p_bars[-1] if type(wrapper_p_bars[-1]) is int else -(wrapper_p_bars[-1].pos + 2)
+    else:
+        wrapper_p_bars = []
+    p_bar = Printer.progress(episodes, unit='episodes', total=len(episodes), unit_scale=True,
+                             disable=not Zotify.CONFIG.get_show_playlist_pbar(), pos=pos)
+    wrapper_p_bars.append(p_bar if Zotify.CONFIG.get_show_playlist_pbar() else pos)
+    
+    for episode in p_bar:
+        download_episode(episode, wrapper_p_bars)
+        p_bar.set_description(get_episode_info(episode)[2])
+        for bar in wrapper_p_bars:
+            if type(bar) != int: bar.refresh()
+
+
+def download_episode(episode_id, wrapper_p_bars: list | None = None) -> None:
     podcast_name, duration_ms, episode_name = get_episode_info(episode_id)
     extra_paths = podcast_name + '/'
+    
+    Printer.print(PrintChannel.PROGRESS_INFO, "\n")
     prepare_download_loader = Loader(PrintChannel.PROGRESS_INFO, "Preparing download...")
     prepare_download_loader.start()
 
     if podcast_name is None:
-        Printer.print(PrintChannel.SKIPS, '###   SKIPPING: (EPISODE NOT FOUND)   ###')
         prepare_download_loader.stop()
+        Printer.print(PrintChannel.ERRORS, f'###   SKIPPING EPISODE - FAILED TO QUERY METADATA - Episode_ID: {str(episode_id)}   ###')
+        Printer.print(PrintChannel.SKIPS, "\n\n")
     else:
         filename = podcast_name + ' - ' + episode_name
 
@@ -104,20 +126,27 @@ def download_episode(episode_id) -> None:
                 and Path(filepath).stat().st_size == total_size
                 and Zotify.CONFIG.get_skip_existing()
             ):
-                Printer.print(PrintChannel.SKIPS, "\n###   SKIPPING: " + podcast_name + " - " + episode_name + " (EPISODE ALREADY EXISTS)   ###")
                 prepare_download_loader.stop()
+                Printer.print(PrintChannel.SKIPS, '###   SKIPPING: "{podcast_name} - {episode_name}" (EPISODE ALREADY EXISTS)   ###')
+                Printer.print(PrintChannel.SKIPS, "\n\n")
                 return
 
             prepare_download_loader.stop()
             time_start = time.time()
             downloaded = 0
+            pos = 1
+            if wrapper_p_bars is not None:
+                pos = wrapper_p_bars[-1] if type(wrapper_p_bars[-1]) is int else -(wrapper_p_bars[-1].pos + 2)
+                for bar in wrapper_p_bars:
+                    if type(bar) != int: bar.refresh()
             with open(filepath, 'wb') as file, Printer.progress(
                 desc=filename,
                 total=total_size,
                 unit='B',
                 unit_scale=True,
                 unit_divisor=1024,
-                disable=not Zotify.CONFIG.get_show_download_pbar()
+                disable=not Zotify.CONFIG.get_show_download_pbar(),
+                pos=pos
             ) as p_bar:
                 prepare_download_loader.stop()
                 while True:
@@ -137,3 +166,4 @@ def download_episode(episode_id) -> None:
             download_podcast_directly(direct_download_url, filepath)
 
     prepare_download_loader.stop()
+    Printer.print(PrintChannel.ERRORS, "\n")

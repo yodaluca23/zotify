@@ -46,6 +46,7 @@ LYRICS_LOCATION = "LYRICS_LOCATION"
 FFMPEG_LOG_LEVEL = "FFMPEG_LOG_LEVEL"
 PRINT_URL_PROGRESS = "PRINT_URL_PROGRESS"
 PRINT_ALBUM_PROGRESS = "PRINT_ALBUM_PROGRESS"
+PRINT_ARTIST_PROGRESS = "PRINT_ARTIST_PROGRESS"
 PRINT_PLAYLIST_PROGRESS = "PRINT_PLAYLIST_PROGRESS"
 
 
@@ -85,9 +86,10 @@ CONFIG_VALUES = {
     PRINT_DOWNLOAD_PROGRESS:    { 'default': 'True',                                                        'type': bool,   'arg': '--print-download-progress'    },
     PRINT_URL_PROGRESS:         { 'default': 'True',                                                        'type': bool,   'arg': '--print-url-progress'         },
     PRINT_ALBUM_PROGRESS:       { 'default': 'True',                                                        'type': bool,   'arg': '--print-album-progress'       },
+    PRINT_ARTIST_PROGRESS:      { 'default': 'True',                                                        'type': bool,   'arg': '--print-artist-progress'      },
     PRINT_PLAYLIST_PROGRESS:    { 'default': 'True',                                                        'type': bool,   'arg': '--print-playlist-progress'    },
     PRINT_PROGRESS_INFO:        { 'default': 'True',                                                        'type': bool,   'arg': '--print-progress-info'        },
-    PRINT_DOWNLOADS:            { 'default': 'False',                                                       'type': bool,   'arg': '--print-downloads'            },
+    PRINT_DOWNLOADS:            { 'default': 'True',                                                        'type': bool,   'arg': '--print-downloads'            },
     PRINT_WARNINGS:             { 'default': 'True',                                                        'type': bool,   'arg': '--print-warnings'             },
     PRINT_ERRORS:               { 'default': 'True',                                                        'type': bool,   'arg': '--print-errors'               },
     PRINT_API_ERRORS:           { 'default': 'True',                                                        'type': bool,   'arg': '--print-api-errors'           },
@@ -348,10 +350,15 @@ class Config:
         return cls.get(PRINT_ALBUM_PROGRESS)
     
     @classmethod
+    def get_show_artist_pbar(cls) -> bool:
+        return cls.get(PRINT_ARTIST_PROGRESS)
+    
+    @classmethod
     def get_show_playlist_pbar(cls) -> bool:
         return cls.get(PRINT_PLAYLIST_PROGRESS)
     
     @classmethod
     def get_show_any_progress(cls) -> bool:
         return cls.get(PRINT_DOWNLOAD_PROGRESS) or cls.get(PRINT_URL_PROGRESS) \
-           or cls.get(PRINT_ALBUM_PROGRESS) or cls.get(PRINT_PLAYLIST_PROGRESS)
+           or cls.get(PRINT_ALBUM_PROGRESS) or cls.get(PRINT_ARTIST_PROGRESS) \
+        or cls.get(PRINT_PLAYLIST_PROGRESS)

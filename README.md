@@ -93,9 +93,10 @@ Be aware you have to set boolean values in the commandline like this: `--downloa
 | PRINT_DOWNLOAD_PROGRESS      | --print-download-progress        | True     | Show song download progress bar
 | PRINT_URL_PROGRESS           | --print-url-progress             | True     | Show url progress bar
 | PRINT_ALBUM_PROGRESS         | --print-album-progress           | True     | Show album progress bar
+| PRINT_ARTIST_PROGRESS        | --print-artist-progress          | True     | Show artist progress bar
 | PRINT_PLAYLIST_PROGRESS      | --print-playlist-progress        | True     | Show playlist progress bar
 | PRINT_PROGRESS_INFO          | --print-progress-info            | True     | Show download progress info
-| PRINT_DOWNLOADS              | --print-downloads                | False    | Print messages when a song is finished downloading
+| PRINT_DOWNLOADS              | --print-downloads                | True     | Print messages when a song is finished downloading
 | PRINT_WARNINGS               | --print-warnings                 | True     | Show warnings
 | PRINT_ERRORS                 | --print-errors                   | True     | Show errors
 | PRINT_API_ERRORS             | --print-api-errors               | True     | Show API errors
