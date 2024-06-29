@@ -319,25 +319,25 @@ def convert_audio_format(filename) -> None:
     """ Converts raw audio into playable file """
     temp_filename = f'{PurePath(filename).parent}.tmp'
     Path(filename).replace(temp_filename)
-
+    
     download_format = Zotify.CONFIG.get_download_format().lower()
     file_codec = CODEC_MAP.get(download_format, 'copy')
+    bitrate = None
     if file_codec != 'copy':
         bitrate = Zotify.CONFIG.get_transcode_bitrate()
-        bitrates = {
-            'auto': '320k' if Zotify.check_premium() else '160k',
-            'normal': '96k',
-            'high': '160k',
-            'very_high': '320k'
-        }
-        bitrate = bitrates[Zotify.CONFIG.get_download_quality()]
-    else:
-        bitrate = None
-
+        if bitrate == "auto":
+            bitrates = {
+                'auto': '320k' if Zotify.check_premium() else '160k',
+                'normal': '96k',
+                'high': '160k',
+                'very_high': '320k'
+            }
+            bitrate = bitrates[Zotify.CONFIG.get_download_quality()]
+    
     output_params = ['-c:a', file_codec]
-    if bitrate:
+    if bitrate is not None:
         output_params += ['-b:a', bitrate]
-
+    
     try:
         ff_m = ffmpy.FFmpeg(
             global_options=['-y', '-hide_banner', f'-loglevel {Zotify.CONFIG.get_ffmpeg_log_level()}'],
@@ -346,9 +346,9 @@ def convert_audio_format(filename) -> None:
         )
         with Loader(PrintChannel.PROGRESS_INFO, "Converting file..."):
             ff_m.run()
-
+        
         if Path(temp_filename).exists():
             Path(temp_filename).unlink()
-
+    
     except ffmpy.FFExecutableNotFoundError:
         Printer.print(PrintChannel.WARNINGS, f'###   SKIPPING {file_codec.upper()} CONVERSION - FFMPEG NOT FOUND   ###')
