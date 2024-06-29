@@ -53,7 +53,7 @@ def client(args) -> None:
         download_from_user_playlist()
         return
 
-    if args.liked_songs:
+    if args.LIKED_SONGS:
         liked_songs = get_saved_tracks()
         
         pos = 3
@@ -72,7 +72,7 @@ def client(args) -> None:
                 if type(bar) != int: bar.refresh()
         return
     
-    if args.followed_artists:
+    if args.FOLLOWED_ARTISTS:
         artists = get_followed_artists()
         pos = 7
         p_bar = Printer.progress(artists, unit='artists', total=len(artists), unit_scale=True, 

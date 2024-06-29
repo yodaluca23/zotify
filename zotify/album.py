@@ -45,7 +45,7 @@ def get_artist_albums(artist_id):
 
 def download_album(album, wrapper_p_bars: list | None = None):
     """ Downloads songs from an album """
-    artist, album_name = get_album_name(album)
+    album_artist, album_name = get_album_name(album)
     tracks = get_album_tracks(album)
     char_num = max({len(str(len(tracks))), 2})
     
@@ -61,7 +61,7 @@ def download_album(album, wrapper_p_bars: list | None = None):
     wrapper_p_bars.append(p_bar if Zotify.CONFIG.get_show_album_pbar() else pos)
     
     for n, track in p_bar:
-        download_track('album', track[ID], extra_keys={'album_num': str(n).zfill(char_num), 'artist': artist, 'album': album_name, 'album_id': album},
+        download_track('album', track[ID], extra_keys={'album_num': str(n).zfill(char_num), 'album_artist': album_artist, 'album': album_name, 'album_id': album},
                        wrapper_p_bars=wrapper_p_bars)
         p_bar.set_description(track[NAME])
         for bar in wrapper_p_bars:
@@ -85,6 +85,6 @@ def download_artist_albums(artist, wrapper_p_bars: list | None = None):
     
     for album_id in p_bar:
         download_album(album_id, wrapper_p_bars)
-        p_bar.set_description(get_album_name(album_id))
+        p_bar.set_description(get_album_name(album_id)[1])
         for bar in wrapper_p_bars:
             if type(bar) != int: bar.refresh()

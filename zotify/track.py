@@ -60,6 +60,7 @@ def get_song_info(song_id) -> Tuple[List[str], List[Any], str, str, Any, Any, An
             artists.append(data[NAME])
 
         album_name = info[TRACKS][0][ALBUM][NAME]
+        album_artist = info[TRACKS][0][ALBUM][ARTISTS][0][NAME]
         name = info[TRACKS][0][NAME]
         release_year = info[TRACKS][0][ALBUM][RELEASE_DATE].split('-')[0]
         disc_number = info[TRACKS][0][DISC_NUMBER]
@@ -74,7 +75,7 @@ def get_song_info(song_id) -> Tuple[List[str], List[Any], str, str, Any, Any, An
                 image = i
         image_url = image[URL]
 
-        return artists, info[TRACKS][0][ARTISTS], album_name, name, image_url, release_year, disc_number, track_number, scraped_song_id, is_playable, duration_ms
+        return artists, info[TRACKS][0][ARTISTS], album_name, album_artist, name, image_url, release_year, disc_number, track_number, scraped_song_id, is_playable, duration_ms
     except Exception as e:
         raise ValueError(f'Failed to parse TRACKS_URL response: {str(e)}\n{raw}')
 
@@ -154,7 +155,7 @@ def download_track(mode: str, track_id: str, extra_keys=None, wrapper_p_bars: li
     try:
         output_template = Zotify.CONFIG.get_output(mode)
         
-        (artists, raw_artists, album_name, name, image_url, release_year, disc_number,
+        (artists, raw_artists, album_name, album_artist, name, image_url, release_year, disc_number,
          track_number, scraped_song_id, is_playable, duration_ms) = get_song_info(track_id)
         
         song_name = fix_filename(artists[0]) + ' - ' + fix_filename(name)
@@ -165,6 +166,7 @@ def download_track(mode: str, track_id: str, extra_keys=None, wrapper_p_bars: li
         ext = EXT_MAP.get(Zotify.CONFIG.get_download_format().lower())
         
         output_template = output_template.replace("{artist}", fix_filename(artists[0]))
+        output_template = output_template.replace("{album_artist}", fix_filename(album_artist))
         output_template = output_template.replace("{album}", fix_filename(album_name))
         output_template = output_template.replace("{song_name}", fix_filename(name))
         output_template = output_template.replace("{release_year}", fix_filename(release_year))
@@ -274,7 +276,7 @@ def download_track(mode: str, track_id: str, extra_keys=None, wrapper_p_bars: li
                     
                     convert_audio_format(filename_temp)
                     try:
-                        set_audio_tags(filename_temp, artists, genres, name, album_name, release_year, disc_number, track_number)
+                        set_audio_tags(filename_temp, artists, genres, name, album_name, album_artist, release_year, disc_number, track_number)
                         set_music_thumbnail(filename_temp, image_url)
                     except Exception:
                         Printer.print(PrintChannel.ERRORS, "\n")
@@ -325,7 +327,7 @@ def convert_audio_format(filename) -> None:
     bitrate = None
     if file_codec != 'copy':
         bitrate = Zotify.CONFIG.get_transcode_bitrate()
-        if bitrate == "auto":
+        if bitrate in {"auto", ""}:
             bitrates = {
                 'auto': '320k' if Zotify.check_premium() else '160k',
                 'normal': '96k',

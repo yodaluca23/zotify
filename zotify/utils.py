@@ -131,10 +131,10 @@ def clear() -> None:
         os.system('clear')
 
 
-def set_audio_tags(filename, artists, genres, name, album_name, release_year, disc_number, track_number) -> None:
+def set_audio_tags(filename, artists, genres, name, album_name, album_artist, release_year, disc_number, track_number) -> None:
     """ sets music_tag metadata """
     tags = music_tag.load_file(filename)
-    tags[ALBUMARTIST] = artists[0]
+    tags[ALBUMARTIST] = album_artist
     tags[ARTIST] = conv_artist_format(artists)
     tags[GENRE] = genres[0] if not Zotify.CONFIG.get_all_genres() else Zotify.CONFIG.get_all_genres_delimiter().join(genres)
     tags[TRACKTITLE] = name
