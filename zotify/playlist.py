@@ -1,4 +1,5 @@
-from zotify.const import ITEMS, ID, TRACK, NAME
+from zotify.const import ITEMS, ID, TRACK, NAME, TYPE
+from zotify.podcast import download_episode
 from zotify.termoutput import Printer
 from zotify.track import download_track
 from zotify.utils import split_input
@@ -46,16 +47,29 @@ def get_playlist_info(playlist_id):
     return resp['name'].strip(), resp['owner']['display_name'].strip()
 
 
-def download_playlist(playlist):
+def download_playlist(playlist, wrapper_p_bar=None):
     """Downloads all the songs from a playlist"""
-
-    playlist_songs = [song for song in get_playlist_songs(playlist[ID]) if song[TRACK] is not None and song[TRACK][ID]]
-    p_bar = Printer.progress(playlist_songs, unit='song', total=len(playlist_songs), unit_scale=True)
-    enum = 1
-    for song in p_bar:
-        download_track('extplaylist', song[TRACK][ID], extra_keys={'playlist': playlist[NAME], 'playlist_num': str(enum).zfill(2)}, disable_progressbar=True)
+    playlist_songs = [song for song in get_playlist_songs(playlist[ID]) if song[TRACK][ID]]
+    char_num = max({len(str(len(playlist_songs))), 2})
+    pos = 3
+    if wrapper_p_bar is not None:
+        pos = wrapper_p_bar if type(wrapper_p_bar) is int else -(wrapper_p_bar.pos + 2)
+    p_bar = Printer.progress(enumerate(playlist_songs, start=1), unit='song', total=len(playlist_songs), unit_scale=True,
+                             disable=not Zotify.CONFIG.get_show_playlist_pbar(), pos=pos)
+    for n, song in p_bar:
+        if song[TRACK][TYPE] == "episode": # Playlist item is a podcast episode
+            download_episode(song[TRACK][ID])
+        else:
+            download_track('extplaylist', song[TRACK][ID], extra_keys=
+                        {'playlist_song_name': song[TRACK][NAME],
+                         'playlist': playlist[NAME],
+                         'playlist_num': str(n).zfill(char_num),
+                         'playlist_id': playlist[ID],
+                         'playlist_track_id': song[TRACK][ID]},
+                         wrapper_p_bar=p_bar if Zotify.CONFIG.get_show_playlist_pbar() else pos)
+        if wrapper_p_bar is not None and type(wrapper_p_bar) is not int:
+            wrapper_p_bar.refresh()
         p_bar.set_description(song[TRACK][NAME])
-        enum += 1
 
 
 def download_from_user_playlist():

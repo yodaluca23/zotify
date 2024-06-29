@@ -4,7 +4,7 @@ from pathlib import Path
 
 from zotify.album import download_album, download_artist_albums
 from zotify.const import TRACK, NAME, ID, ARTIST, ARTISTS, ITEMS, TRACKS, EXPLICIT, ALBUM, ALBUMS, \
-    OWNER, PLAYLIST, PLAYLISTS, DISPLAY_NAME, TYPE
+    OWNER, PLAYLIST, PLAYLISTS, DISPLAY_NAME
 from zotify.loader import Loader
 from zotify.playlist import get_playlist_songs, get_playlist_info, download_from_user_playlist, download_playlist
 from zotify.podcast import download_episode, get_show_episodes
@@ -85,41 +85,26 @@ def client(args) -> None:
 def download_from_urls(urls: list[str]) -> bool:
     """ Downloads from a list of urls """
     download = False
-
-    for spotify_url in urls:
+    
+    pos = 5
+    p_bar = Printer.progress(urls, unit='url', total=len(urls), unit_scale=True, disable=not Zotify.CONFIG.get_show_url_pbar(), pos=pos)
+    for spotify_url in p_bar:
         track_id, album_id, playlist_id, episode_id, show_id, artist_id = regex_input_for_urls(spotify_url)
-
+        
         if track_id is not None:
             download = True
-            download_track('single', track_id)
+            download_track('single', track_id, wrapper_p_bar=p_bar if Zotify.CONFIG.get_show_url_pbar() else pos)
         elif artist_id is not None:
             download = True
             download_artist_albums(artist_id)
         elif album_id is not None:
             download = True
-            download_album(album_id)
+            download_album(album_id, p_bar if Zotify.CONFIG.get_show_url_pbar() else pos)
         elif playlist_id is not None:
             download = True
-            playlist_songs = get_playlist_songs(playlist_id)
-            name, _ = get_playlist_info(playlist_id)
-            enum = 1
-            char_num = len(str(len(playlist_songs)))
-            for song in playlist_songs:
-                if not song[TRACK][NAME] or not song[TRACK][ID]:
-                    Printer.print(PrintChannel.SKIPS, '###   SKIPPING:  SONG DOES NOT EXIST ANYMORE   ###' + "\n")
-                else:
-                    if song[TRACK][TYPE] == "episode": # Playlist item is a podcast episode
-                        download_episode(song[TRACK][ID])
-                    else:
-                        download_track('playlist', song[TRACK][ID], extra_keys=
-                        {
-                            'playlist_song_name': song[TRACK][NAME],
-                            'playlist': name,
-                            'playlist_num': str(enum).zfill(char_num),
-                            'playlist_id': playlist_id,
-                            'playlist_track_id': song[TRACK][ID]
-                        })
-                    enum += 1
+            download_playlist({ID: playlist_id,
+                               NAME: get_playlist_info(playlist_id)[0]},
+                               p_bar if Zotify.CONFIG.get_show_url_pbar() else pos)
         elif episode_id is not None:
             download = True
             download_episode(episode_id)
