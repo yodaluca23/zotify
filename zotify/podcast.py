@@ -116,7 +116,8 @@ def download_episode(episode_id) -> None:
                 total=total_size,
                 unit='B',
                 unit_scale=True,
-                unit_divisor=1024
+                unit_divisor=1024,
+                disable=not Zotify.CONFIG.get_show_download_pbar()
             ) as p_bar:
                 prepare_download_loader.stop()
                 while True:
