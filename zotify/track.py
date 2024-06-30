@@ -184,14 +184,14 @@ def download_track(mode: str, track_id: str, extra_keys=None, wrapper_p_bars: li
             filename_temp = PurePath(Zotify.CONFIG.get_temp_download_dir()).joinpath(f'zotify_{str(uuid.uuid4())}_{track_id}.{ext}')
         
         check_name = Path(filename).is_file() and Path(filename).stat().st_size
-        check_id = scraped_song_id in get_directory_song_ids(filedir)
+        check_local = scraped_song_id in get_directory_song_ids(filedir)
         check_all_time = scraped_song_id in get_previously_downloaded()
         if Zotify.CONFIG.get_disable_directory_archives():
-            check_id = not Zotify.CONFIG.get_skip_existing() or not Zotify.CONFIG.get_skip_previously_downloaded()
-            # avoids overwrite case if file in dir but ID not in global archive
+            check_local = not Zotify.CONFIG.get_skip_existing() or not Zotify.CONFIG.get_skip_previously_downloaded()
+            # avoids overwrite case only when both "safety switches" are on
         
-        # a song with the same name is installed
-        if not check_id and check_name:
+        # same filename, not same song_id, rename the newcomer
+        if not check_local and check_name:
             c = len([file for file in Path(filedir).iterdir() if file.match(filename.stem + "*")])
             filename = PurePath(filedir).joinpath(f'{filename.stem}_{c}{filename.suffix}')
     
@@ -210,7 +210,7 @@ def download_track(mode: str, track_id: str, extra_keys=None, wrapper_p_bars: li
                 Printer.print(PrintChannel.SKIPS, f'###   SKIPPING: "{song_name}" (SONG IS UNAVAILABLE)   ###')
                 Printer.print(PrintChannel.SKIPS, "\n\n")
             else:
-                if check_id and check_name and Zotify.CONFIG.get_skip_existing() and not Zotify.CONFIG.get_disable_directory_archives():
+                if check_local and check_name and Zotify.CONFIG.get_skip_existing() and not Zotify.CONFIG.get_disable_directory_archives():
                     prepare_download_loader.stop()
                     Printer.print(PrintChannel.SKIPS, f'###   SKIPPING: "{song_name}" (SONG ALREADY EXISTS)   ###')
                     Printer.print(PrintChannel.SKIPS, "\n\n")
@@ -298,7 +298,7 @@ def download_track(mode: str, track_id: str, extra_keys=None, wrapper_p_bars: li
                         if not check_all_time:
                             add_to_archive(scraped_song_id, PurePath(filename).name, artists[0], name)
                     # add song ID to download directory's .song_ids file
-                    if not check_id:
+                    if not check_local:
                         add_to_directory_song_ids(filedir, scraped_song_id, PurePath(filename).name, artists[0], name)
                     
                     if not Zotify.CONFIG.get_bulk_wait_time():
