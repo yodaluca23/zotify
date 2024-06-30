@@ -28,6 +28,7 @@ PRINT_ERRORS = 'PRINT_ERRORS'
 PRINT_DOWNLOADS = 'PRINT_DOWNLOADS'
 PRINT_API_ERRORS = 'PRINT_API_ERRORS'
 TEMP_DOWNLOAD_DIR = 'TEMP_DOWNLOAD_DIR'
+MD_DISC_TRACK_TOTALS = "MD_DISC_TRACK_TOTALS"
 MD_SAVE_GENRES = 'MD_SAVE_GENRES'
 MD_ALLGENRES = 'MD_ALLGENRES'
 MD_GENREDELIMITER = 'MD_GENREDELIMITER'
@@ -75,6 +76,7 @@ CONFIG_VALUES = {
     SPLIT_ALBUM_DISCS:          { 'default': 'False',                  'type': bool,   'arg': ('--split-album-discs'                    ,) },
     DOWNLOAD_LYRICS:            { 'default': 'True',                   'type': bool,   'arg': ('--download-lyrics'                      ,) },
     LYRICS_LOCATION:            { 'default': '',                       'type': str,    'arg': ('--lyrics-location'                      ,) },
+    MD_DISC_TRACK_TOTALS:       { 'default': 'True',                   'type': bool,   'arg': ('--md-disc-track-totals'                 ,) },
     MD_SAVE_GENRES:             { 'default': 'False',                  'type': bool,   'arg': ('--md-save-genres'                       ,) },
     MD_ALLGENRES:               { 'default': 'False',                  'type': bool,   'arg': ('--md-allgenres'                         ,) },
     MD_GENREDELIMITER:          { 'default': ',',                      'type': str,    'arg': ('--md-genredelimiter'                    ,) },
@@ -284,6 +286,10 @@ class Config:
         if cls.get(TEMP_DOWNLOAD_DIR) == '':
             return ''
         return PurePath(Path(cls.get(TEMP_DOWNLOAD_DIR)).expanduser())
+    
+    @classmethod
+    def get_disc_track_totals(cls) -> bool:
+        return cls.get(MD_DISC_TRACK_TOTALS)
     
     @classmethod
     def get_save_genres(cls) -> bool:

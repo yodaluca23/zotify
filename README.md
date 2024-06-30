@@ -78,6 +78,7 @@ Be aware you have to set boolean values in the commandline like this: `--downloa
 | SPLIT_ALBUM_DISCS          | --split-album-discs                | False    | Saves each disk in its own folder
 | DOWNLOAD_LYRICS            | --download-lyrics                  | True     | Downloads synced lyrics in .lrc format, uses unsynced as fallback
 | LYRICS_LOCATION            | --lyrics-location                  |          | Directory where Zotify saves lyrics files (default is output directory)
+| MD_DISC_TRACK_TOTALS       | --md-disc-track-totals             | True     | Whether track totals and disc totals should be saved in metadata
 | MD_SAVE_GENRES             | --md-save-genres                   | False    | Whether genres should be saved in metadata
 | MD_ALLGENRES               | --md-allgenres                     | False    | Save all relevant genres in metadata
 | MD_GENREDELIMITER          | --md-genredelimiter                | ,        | Delimiter character used to split genres in metadata
@@ -102,7 +103,7 @@ Be aware you have to set boolean values in the commandline like this: `--downloa
 | PRINT_ERRORS               | --print-errors                     | True     | Show errors
 | PRINT_API_ERRORS           | --print-api-errors                 | True     | Show API errors
 | FFMPEG_LOG_LEVEL           | --ffmpeg-log-level                 | error    | Detail of FFMPEG's log when completing a transcoded download
-   
+
 *very-high is limited to premium only  
 
 ### Configuration 

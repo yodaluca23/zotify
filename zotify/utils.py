@@ -12,7 +12,7 @@ import music_tag
 import requests
 
 from zotify.const import ARTIST, GENRE, TRACKTITLE, ALBUM, YEAR, DISCNUMBER, TRACKNUMBER, ARTWORK, \
-    WINDOWS_SYSTEM, LINUX_SYSTEM, ALBUMARTIST
+    WINDOWS_SYSTEM, LINUX_SYSTEM, ALBUMARTIST, TOTALTRACKS, TOTALDISCS, EXT_MAP
 from zotify.zotify import Zotify
 
 
@@ -131,7 +131,7 @@ def clear() -> None:
         os.system('clear')
 
 
-def set_audio_tags(filename, artists, genres, name, album_name, album_artist, release_year, disc_number, track_number) -> None:
+def set_audio_tags(filename, artists, genres, name, album_name, album_artist, release_year, disc_number, track_number, total_tracks, total_discs) -> None:
     """ sets music_tag metadata """
     tags = music_tag.load_file(filename)
     tags[ALBUMARTIST] = album_artist
@@ -142,6 +142,19 @@ def set_audio_tags(filename, artists, genres, name, album_name, album_artist, re
     tags[YEAR] = release_year
     tags[DISCNUMBER] = disc_number
     tags[TRACKNUMBER] = track_number
+    
+    if Zotify.CONFIG.get_disc_track_totals():
+        tags[TOTALTRACKS] = total_tracks
+        if total_discs is not None:
+            tags[TOTALDISCS] = total_discs
+    
+    ext = EXT_MAP[Zotify.CONFIG.get_download_format().lower()]
+    if ext == "mp3" and not Zotify.CONFIG.get_disc_track_totals():
+        # music_tag python library writes DISCNUMBER and TRACKNUMBER as X/Y instead of X for mp3
+        # this method bypasses all internal formatting, probably not resilient against arbitrary inputs
+        tags.set_raw("mp3", "TPOS", str(disc_number))
+        tags.set_raw("mp3", "TRCK", str(track_number))
+    
     tags.save()
 
 

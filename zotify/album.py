@@ -1,4 +1,4 @@
-from zotify.const import ITEMS, ARTISTS, NAME, ID
+from zotify.const import ITEMS, ARTISTS, NAME, ID, DISC_NUMBER
 from zotify.termoutput import Printer
 from zotify.track import download_track
 from zotify.utils import fix_filename
@@ -8,26 +8,28 @@ ALBUM_URL = 'https://api.spotify.com/v1/albums'
 ARTIST_URL = 'https://api.spotify.com/v1/artists'
 
 
-def get_album_tracks(album_id):
-    """ Returns album tracklist """
+def get_album_info(album_id):
+    """ Returns album info and tracklist"""
+    
+    (raw, resp) = Zotify.invoke_url(f'{ALBUM_URL}/{album_id}')
+    
+    album_name = fix_filename(resp[NAME])
+    album_artist = resp[ARTISTS][0][NAME]
+    
     songs = []
     offset = 0
     limit = 50
-
+    
     while True:
         resp = Zotify.invoke_url_with_params(f'{ALBUM_URL}/{album_id}/tracks', limit=limit, offset=offset)
         offset += limit
         songs.extend(resp[ITEMS])
         if len(resp[ITEMS]) < limit:
             break
-
-    return songs
-
-
-def get_album_name(album_id):
-    """ Returns album name """
-    (raw, resp) = Zotify.invoke_url(f'{ALBUM_URL}/{album_id}')
-    return resp[ARTISTS][0][NAME], fix_filename(resp[NAME])
+    
+    total_discs = songs[-1][DISC_NUMBER]
+    
+    return album_name, album_artist, songs, total_discs
 
 
 def get_artist_albums(artist_id):
@@ -45,8 +47,7 @@ def get_artist_albums(artist_id):
 
 def download_album(album, wrapper_p_bars: list | None = None):
     """ Downloads songs from an album """
-    album_artist, album_name = get_album_name(album)
-    tracks = get_album_tracks(album)
+    album_name, album_artist, tracks, total_discs = get_album_info(album)
     char_num = max({len(str(len(tracks))), 2})
     
     pos = 3
@@ -61,7 +62,12 @@ def download_album(album, wrapper_p_bars: list | None = None):
     wrapper_p_bars.append(p_bar if Zotify.CONFIG.get_show_album_pbar() else pos)
     
     for n, track in p_bar:
-        download_track('album', track[ID], extra_keys={'album_num': str(n).zfill(char_num), 'album_artist': album_artist, 'album': album_name, 'album_id': album},
+        download_track('album', track[ID], 
+                       extra_keys={'album_num': str(n).zfill(char_num), 
+                                   'album_artist': album_artist, 
+                                   'album': album_name, 
+                                   'album_id': album,
+                                   "total_discs": total_discs},
                        wrapper_p_bars=wrapper_p_bars)
         p_bar.set_description(track[NAME])
         for bar in wrapper_p_bars:
@@ -85,6 +91,6 @@ def download_artist_albums(artist, wrapper_p_bars: list | None = None):
     
     for album_id in p_bar:
         download_album(album_id, wrapper_p_bars)
-        p_bar.set_description(get_album_name(album_id)[1])
+        p_bar.set_description(get_album_info(album_id)[0])
         for bar in wrapper_p_bars:
             if type(bar) != int: bar.refresh()
