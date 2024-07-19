@@ -149,6 +149,23 @@ class Config:
         
         if args.no_splash:
             cls.Values[PRINT_SPLASH] = False
+        cls.useA2 = config.get('useA2', False)
+
+        cls.override_existing = config.get('override_existing', False)
+
+
+    @classmethod
+
+    def get_useA2(cls):
+
+        return cls.useA2
+
+
+    @classmethod
+
+    def get_override_existing(cls):
+
+        return cls.override_existing
         
     @classmethod
     def get_default_json(cls) -> Any:
