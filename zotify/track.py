@@ -7,6 +7,8 @@ from typing import Any, Tuple, List
 
 from librespot.metadata import TrackId
 import ffmpy
+import requests
+import json
 
 from zotify.const import TRACKS, ALBUM, GENRES, NAME, ITEMS, DISC_NUMBER, TRACK_NUMBER, TOTAL_TRACKS, IS_PLAYABLE, ARTISTS, IMAGES, URL, \
     RELEASE_DATE, ID, TRACKS_URL, FOLLOWED_ARTISTS_URL, SAVED_TRACKS_URL, TRACK_STATS_URL, CODEC_MAP, EXT_MAP, DURATION_MS, \
@@ -106,41 +108,127 @@ def get_song_genres(rawartists: List[str], track_name: str) -> List[str]:
         return ['']
 
 
-def get_song_lyrics(song_id: str, file_save: str) -> None:
-    raw, lyrics = Zotify.invoke_url(f'https://spclient.wg.spotify.com/color-lyrics/v2/track/{song_id}')
-    if lyrics:
-        try:
-            formatted_lyrics = lyrics['lyrics']['lines']
-        except KeyError:
-            raise ValueError(f'Failed to fetch lyrics: {song_id}')
-        if(lyrics['lyrics']['syncType'] == "UNSYNCED"):
-            with open(file_save, 'w', encoding='utf-8') as file:
-                for line in formatted_lyrics:
-                    file.writelines(line['words'] + '\n')
-            return
-        elif(lyrics['lyrics']['syncType'] == "LINE_SYNCED"):
-            with open(file_save, 'w', encoding='utf-8') as file:
-                for line in formatted_lyrics:
-                    timestamp = int(line['startTimeMs'])
-                    ts_minutes = str(math.floor(timestamp / 60000)).zfill(2)
-                    ts_seconds = str(math.floor((timestamp % 60000) / 1000)).zfill(2)
-                    ts_millis = str(math.floor(timestamp % 1000))[:2].zfill(2)
-                    file.writelines(f'[{ts_minutes}:{ts_seconds}.{ts_millis}]' + line['words'] + '\n')
-            return
-    raise ValueError(f'Failed to fetch lyrics: {song_id}')
+def fetch_lyrics(track_id):
+    url = f'https://beautiful-lyrics.socalifornian.live/lyrics/{track_id}'
+    headers = {
+        'authorization': 'Bearer litterallyAnythingCanGoHereItJustTakesItLOL'
+    }
+    response = requests.get(url, headers=headers)
+    if response.status_code == 200 and response.headers.get('content-length') != '0':
+        return response.json()
+    return None
 
+def convert_to_lrc_timestamp(timestamp):
+    minutes = int(timestamp // 60)
+    seconds = timestamp % 60
+    return f"{minutes:02}:{seconds:05.2f}"
 
-def get_song_duration(song_id: str) -> float:
-    """ Retrieves duration of song in second as is on spotify """
+def parse_lyrics(data, useA2):
+    lyrics = []
+    prev_end_time = 0  # Initialize previous end time to zero
 
-    (raw, resp) = Zotify.invoke_url(f'{TRACK_STATS_URL}{song_id}')
+    def add_empty_timestamp_if_gap(start_time):
+        nonlocal prev_end_time
+        if start_time - prev_end_time > 5:
+            empty_timestamp = f"[{convert_to_lrc_timestamp(prev_end_time)}]"
+            lyrics.append(empty_timestamp)
 
-    # get duration in miliseconds
-    ms_duration = resp['duration_ms']
-    # convert to seconds
-    duration = float(ms_duration)/1000
+    if data['Type'] == 'Line':
+        if useA2:
+            print("The following song is not compatible with A2 extension (Enhanced LRC format), continuing with standard LRC")
+        for item in data['Content']:
+            if item['Type'] == 'Vocal':
+                start_time = item['StartTime']
+                add_empty_timestamp_if_gap(start_time)
+                line = item['Text']
+                timestamp = convert_to_lrc_timestamp(start_time)
+                lyrics.append(f"[{timestamp}] {line.strip()}")
+                prev_end_time = item['EndTime']
+            if 'Background' in item:
+                print("This song has Background with Type Line, I was not able to find this in testing so I don't know the structure, please report this song, so I may add support for it.\n https://gist.github.com/yodaluca23/82ab1129e12f39e30c8e760a8c853c1f")
+    elif data['Type'] == 'Syllable':
+        if useA2:
+            for item in data['Content']:
+                if item['Type'] == 'Vocal':
+                    start_time = item['Lead']['StartTime']
+                    add_empty_timestamp_if_gap(start_time)
+                    syllables = item['Lead']['Syllables']
+                    line = ''
+                    timestamp = convert_to_lrc_timestamp(start_time)
+                    previous_is_part_of_word = False  # Initialize to False or appropriate default value
+                    for syllable in syllables:
+                        syllable_text = syllable['Text']
+                        syllable_timestamp = convert_to_lrc_timestamp(syllable['StartTime'])
 
-    return duration
+                        if previous_is_part_of_word:
+                            line += f"{syllable_text}"
+                        else:
+                            line += f" <{syllable_timestamp}> {syllable_text}"
+                        # Update the previous_is_part_of_word for the next iteration
+                        previous_is_part_of_word = syllable['IsPartOfWord']
+                    lyrics.append(f"[{timestamp}]{line.strip()}")
+                    prev_end_time = item['Lead']['EndTime']
+                        
+                if 'Background' in item:
+                    for bg in item['Background']:
+                        start_time = bg['StartTime']
+                        add_empty_timestamp_if_gap(start_time)
+                        syllables = bg['Syllables']
+                        line = ''
+                        timestamp = convert_to_lrc_timestamp(start_time)
+                        for index, syllable in enumerate(syllables):
+                            syllable_text = syllable['Text']
+                            syllable_timestamp = convert_to_lrc_timestamp(syllable['StartTime'])
+                            if syllable['IsPartOfWord']:
+                                if index == 0:
+                                    line += f"({syllable_text}"
+                                elif index == len(syllables) - 1:
+                                    line += f"{syllable_text})"
+                                else:
+                                    line += f" {syllable_text}"
+                            else:
+                                if index == 0:
+                                    line += f" <{syllable_timestamp}> ({syllable_text}"
+                                elif index == len(syllables) - 1:
+                                    line += f" <{syllable_timestamp}> {syllable_text})"
+                                else:
+                                    line += f" <{syllable_timestamp}> {syllable_text}"
+                        lyrics.append(f"[{timestamp}]{line.strip()}")
+                        prev_end_time = bg['EndTime']
+        else:
+            for item in data['Content']:
+                if item['Type'] == 'Vocal':
+                    start_time = item['Lead']['StartTime']
+                    add_empty_timestamp_if_gap(start_time)
+                    line = ''.join([
+                        f"{syllable['Text']}{' ' if not syllable['IsPartOfWord'] else ''}"
+                        for syllable in item['Lead']['Syllables']
+                    ])
+                    timestamp = convert_to_lrc_timestamp(start_time)
+                    lyrics.append(f"[{timestamp}] {line.strip()}")
+                    prev_end_time = item['Lead']['EndTime']
+                if 'Background' in item:
+                    for bg in item['Background']:
+                        start_time = bg['StartTime']
+                        add_empty_timestamp_if_gap(start_time)
+                        line = ''.join([
+                            f"{syllable['Text']}{' ' if not syllable['IsPartOfWord'] else ''}"
+                            for syllable in bg['Syllables']
+                        ])
+                        timestamp = convert_to_lrc_timestamp(start_time)
+                        lyrics.append(f"[{timestamp}] ({line.rstrip()})")
+                        prev_end_time = bg['EndTime']
+    return lyrics
+
+def save_lyrics(lrc_filename, lyrics_body, is_time_synced, filename):
+    with open(lrc_filename, 'w') as lrc_file:
+        lrc_file.write("\n".join(lyrics_body))
+    if is_time_synced:
+        filename = filename.split('.')[0]
+        print(f"Saved time-synced lyrics for {filename}")
+    else:
+        filename = filename.split('.')[0]
+        print(f"Saved non-time-synced lyrics for {filename}")
 
 
 def download_track(mode: str, track_id: str, extra_keys=None, wrapper_p_bars: list | None = None) -> None:
@@ -273,11 +361,15 @@ def download_track(mode: str, track_id: str, extra_keys=None, wrapper_p_bars: li
                             lyricdir = filedir
                             if Zotify.CONFIG.get_lyrics_location() != '':
                                 lyricdir = PurePath(Zotify.CONFIG.get_lyrics_location())
-                            get_song_lyrics(track_id, lyricdir.joinpath(f"{song_name}.lrc"))
+                            data = fetch_lyrics(track_id)
+                            if data:
+                                lyrics = parse_lyrics(data, Zotify.CONFIG.get_useA2())
+                                lrc_filename = lyricdir.joinpath(f"{song_name}.lrc")
+                                save_lyrics(lrc_filename, lyrics, True, song_name)
+                            else:
+                                Printer.print(PrintChannel.SKIPS, f'###   SKIPPING: LYRICS FOR "{song_name}" (LYRICS NOT AVAILABLE)   ###')
                         except ValueError:
-                            Printer.print(PrintChannel.SKIPS, "\n")
                             Printer.print(PrintChannel.SKIPS, f'###   SKIPPING: LYRICS FOR "{song_name}" (LYRICS NOT AVAILABLE)   ###')
-                            Printer.print(PrintChannel.SKIPS, "\n")
                     
                     # no metadata is written to track prior to conversion
                     convert_audio_format(filename_temp)
